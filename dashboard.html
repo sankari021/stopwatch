@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Vibrant World Clock & Stopwatch Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600&family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif; /* A modern, clean font */
+            
+            /* --- VIBRANT CSS GRADIENT BACKGROUND --- */
+            background: linear-gradient(135deg, #0a0a2a, #2c0e3e, #4c114f, #6c125d); /* Deeper, more vibrant gradient */
+            background-size: 400% 400%;
+            animation: gradientFlow 20s ease infinite alternate; /* Slower, more fluid animation */
+            
+            /* If you want to use a background image and are running this code locally (not in an online compiler):
+               Uncomment the line below and replace 'YOUR_IMAGE_URL_HERE' with your image path (e.g., 'images/my-bg.jpg')
+               Also, comment out or remove the 'background' and 'animation' properties above.
+            */
+            /* background: url('YOUR_IMAGE_URL_HERE') no-repeat center center fixed; */
+            /* background-size: cover; */
+
+
+            color: #e0f2f7; /* Soft white/light blue for text */
+            padding: 30px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            
+            /* FIX FOR SCROLLING: Allows vertical scrolling if content exceeds height */
+            overflow-y: auto; 
+            overflow-x: hidden; /* Prevents horizontal scrolling */
+        }
+
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.8em;
+            color: #ffffff;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.5), 0 0 25px rgba(100, 200, 255, 0.3); /* Subtle glow */
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px; /* Increased gap for better spacing */
+            justify-content: center;
+            width: 100%;
+            max-width: 1000px; /* Constrain max width */
+        }
+
+        .section {
+            background-color: rgba(255, 255, 255, 0.08); /* Slightly more opaque glass */
+            border: 1px solid rgba(255, 255, 255, 0.15); /* Subtle border for definition */
+            padding: 30px; /* Increased padding */
+            border-radius: 20px; /* Softer rounded corners */
+            flex: 1 1 450px; /* Adjusted flex basis */
+            backdrop-filter: blur(15px); /* Stronger blur effect */
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); /* Prominent shadow for depth */
+            transition: all 0.3s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-5px); /* Slight lift on hover */
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
+        }
+
+        h2 {
+            text-align: center;
+            color: #b3e5fc; /* Light blue for section titles */
+            margin-top: 0;
+            margin-bottom: 25px;
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(179, 229, 252, 0.3);
+        }
+
+        input[type="text"] {
+            width: calc(100% - 20px); /* Account for padding */
+            padding: 12px 10px;
+            font-size: 1.1em;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background-color: rgba(0, 0, 0, 0.3); /* Darker, slightly transparent input */
+            color: #e0f2f7;
+            outline: none;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: #64b5f6; /* Highlight border on focus */
+            background-color: rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 10px rgba(100, 181, 246, 0.4);
+        }
+
+        /* Styles for suggestions container and list */
+        .suggestions-container {
+            position: relative;
+            margin-bottom: 25px; /* Space below the input and suggestions */
+        }
+
+        .suggestions-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            background-color: rgba(30, 30, 30, 0.95); /* Darker, almost opaque background */
+            border-radius: 8px;
+            max-height: 200px; /* Taller suggestions list */
+            overflow-y: auto;
+            position: absolute;
+            width: 100%;
+            z-index: 10;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .suggestion-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08); /* Fainter separator */
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-item:hover {
+            background-color: rgba(60, 150, 255, 0.2); /* Soft blue hover */
+            color: #81d4fa; /* Lighter blue text on hover */
+        }
+
+        .suggestion-item.no-results {
+            color: rgba(255, 255, 255, 0.5);
+            cursor: default;
+        }
+
+        .clock-grid {
+            display: grid;
+            grid-template-columns: 1fr; /* Only one column for the selected clock */
+            gap: 20px;
+            justify-items: center; /* Center the single clock card */
+        }
+
+        .clock-card {
+            background-color: rgba(255, 255, 255, 0.12); /* Slightly more opaque */
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 25px; /* Larger padding */
+            border-radius: 15px; /* Softer rounded corners */
+            text-align: center;
+            width: 100%; /* Take full width of its grid column */
+            max-width: 300px; /* Max width for the clock card */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+            transition: all 0.3s ease;
+        }
+
+        .clock-card:hover {
+            transform: scale(1.02); /* Slight scale on hover */
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .country {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            color: #c0f0f0; /* Slightly different text color for country */
+            font-weight: 600;
+        }
+
+        .time {
+            font-family: 'Orbitron', monospace; /* Digital-style font for time */
+            font-size: 2.8em; /* Larger time display */
+            font-weight: 700;
+            color: #81d4fa; /* Vibrant blue for time */
+            text-shadow: 0 0 15px rgba(129, 212, 250, 0.6); /* Glow effect for time */
+        }
+
+        .stopwatch-time {
+            font-family: 'Open Sans', sans-serif; /* Changed from Orbitron to Open Sans */
+            font-size: 3.5em; /* Even larger for stopwatch */
+            text-align: center;
+            margin-bottom: 30px;
+            color: #a7ffeb; /* Light green for stopwatch */
+            text-shadow: 0 0 20px rgba(167, 255, 235, 0.7); /* Stronger glow */
+            letter-spacing: 2px;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px; /* Increased gap between buttons */
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 22px; /* Larger buttons */
+            border: none;
+            border-radius: 10px; /* Softer button corners */
+            font-size: 1.1em;
+            cursor: pointer;
+            background-color: #3f51b5; /* Deeper blue for buttons */
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            background-color: #5c6bc0; /* Lighter blue on hover */
+            transform: translateY(-3px) scale(1.05); /* Lift and slight scale */
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .laps {
+            max-height: 180px; /* Taller laps container */
+            overflow-y: auto;
+            margin-top: 25px;
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 15px; /* Increased padding */
+            border-radius: 12px; /* Softer corners */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .laps div {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Fainter separator */
+            padding: 8px;
+            color: #c0f0f0;
+            font-family: 'Open Sans', monospace; /* Changed from Orbitron to Open Sans for laps */
+        }
+
+        .laps div:last-child {
+            border-bottom: none;
+        }
+        /* Scrollbar styles for webkit browsers */
+        .laps::-webkit-scrollbar, .suggestions-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .laps::-webkit-scrollbar-track, .suggestions-list::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+
+        .laps::-webkit-scrollbar-thumb, .suggestions-list::-webkit-scrollbar-thumb {
+            background-color: #3f51b5;
+            border-radius: 10px;
+            border: 2px solid rgba(0,0,0,0.2);
+        }
+        .laps::-webkit-scrollbar-thumb:hover, .suggestions-list::-webkit-scrollbar-thumb:hover {
+            background-color: #5c6bc0;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+            .section {
+                padding: 20px;
+                flex: 1 1 100%; /* Stack sections on smaller screens */
+            }
+            .stopwatch-time {
+                font-size: 3em;
+            }
+            .buttons button {
+                padding: 10px 18px;
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🌍 World Clock & Stopwatch</h1>
+
+    <div class="container">
+
+        <div class="section">
+            <h2>World Clocks</h2>
+            <div class="suggestions-container">
+                <input type="text" id="searchInput" placeholder="Search for a country or city...">
+                <ul id="suggestionsList" class="suggestions-list"></ul>
+            </div>
+            <div class="clock-grid" id="clockGrid">
+                </div>
+        </div>
+
+        <div class="section">
+            <h2>Stopwatch</h2>
+            <div class="stopwatch-time" id="stopwatchDisplay">00:00:00.000</div>
+            <div class="buttons">
+                <button id="startBtn">Start</button>
+                <button id="stopBtn">Stop</button>
+                <button id="resetBtn">Reset</button>
+                <button id="lapBtn">Lap</button>
+            </div>
+            <div class="laps" id="lapsContainer"></div>
+        </div>
+
+    </div>
+
+    <script>
+        // ---------- World Clock ----------
+        const clocks = [
+            { label: "🇮🇳 India (Kolkata)", zone: "Asia/Kolkata" },
+            { label: "🇺🇸 USA - New York", zone: "America/New_York" },
+            { label: "🇺🇸 USA - Los Angeles", zone: "America/Los_Angeles" },
+            { label: "🇬🇧 United Kingdom (London)", zone: "Europe/London" },
+            { label: "🇯🇵 Japan (Tokyo)", zone: "Asia/Tokyo" },
+            { label: "🇦🇺 Australia - Sydney", zone: "Australia/Sydney" },
+            { label: "🇦🇺 Australia - Perth", zone: "Australia/Perth" },
+            { label: "🇧🇷 Brazil (Sao Paulo)", zone: "America/Sao_Paulo" },
+            { label: "🇩🇪 Germany (Berlin)", zone: "Europe/Berlin" },
+            { label: "🇦🇪 UAE (Dubai)", zone: "Asia/Dubai" },
+            { label: "🇿🇦 South Africa (Johannesburg)", zone: "Africa/Johannesburg" },
+            { label: "🇨🇳 China (Shanghai)", zone: "Asia/Shanghai" },
+            { label: "🇫🇷 France (Paris)", zone: "Europe/Paris" },
+            { label: "🇷🇺 Russia (Moscow)", zone: "Europe/Moscow" },
+            { label: "🇨🇦 Canada (Toronto)", zone: "America/Toronto" },
+            { label: "🇲🇽 Mexico (Mexico City)", zone: "America/Mexico_City" },
+            { label: "🇪🇸 Spain (Madrid)", zone: "Europe/Madrid" },
+            { label: "🇮🇹 Italy (Rome)", zone: "Europe/Rome" },
+            { label: "🇸🇬 Singapore", zone: "Asia/Singapore" },
+            { label: "🇰🇷 South Korea (Seoul)", zone: "Asia/Seoul" },
+            { label: "🇪🇬 Egypt (Cairo)", zone: "Africa/Cairo" },
+            { label: "🇦🇷 Argentina (Buenos Aires)", zone: "America/Argentina/Buenos_Aires" },
+            { label: "🇹🇷 Turkey (Istanbul)", zone: "Europe/Istanbul" },
+            { label: "🇳🇱 Netherlands (Amsterdam)", zone: "Europe/Amsterdam" },
+            { label: "🇸🇪 Sweden (Stockholm)", zone: "Europe/Stockholm" },
+            { label: "🇨🇭 Switzerland (Zurich)", zone: "Europe/Zurich" },
+            { label: "🇳🇿 New Zealand (Auckland)", zone: "Pacific/Auckland" },
+            { label: "🇮🇩 Indonesia (Jakarta)", zone: "Asia/Jakarta" },
+            { label: "🇮🇪 Ireland (Dublin)", zone: "Europe/Dublin" },
+            { label: "🇵🇱 Poland (Warsaw)", zone: "Europe/Warsaw" },
+            { label: "🇵🇪 Peru (Lima)", zone: "America/Lima" },
+            { label: "🇬🇷 Greece (Athens)", zone: "Europe/Athens" },
+            { label: "🇳🇴 Norway (Oslo)", zone: "Europe/Oslo" },
+            { label: "🇩🇰 Denmark (Copenhagen)", zone: "Europe/Copenhagen" },
+            { label: "🇫🇮 Finland (Helsinki)", zone: "Europe/Helsinki" }
+        ];
+
+        const clockGrid = document.getElementById("clockGrid");
+        const searchInput = document.getElementById("searchInput");
+        const suggestionsList = document.getElementById("suggestionsList");
+
+        let currentDisplayedClock = null;
+
+        function updateDisplayedClockTime() {
+            if (currentDisplayedClock) {
+                const now = new Date();
+                const formatter = new Intl.DateTimeFormat('en-US', {
+                    timeZone: currentDisplayedClock.zone,
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false // Display in 24-hour format
+                });
+                const timeString = formatter.format(now);
+                const timeElement = document.getElementById(`time-${currentDisplayedClock.zone}`);
+                if (timeElement) timeElement.textContent = timeString;
+            }
+        }
+
+        setInterval(updateDisplayedClockTime, 1000);
+
+        function renderClockCard(clock) {
+            clockGrid.innerHTML = ''; // Clear previous clock and prompt
+            const card = document.createElement("div");
+            card.className = "clock-card";
+
+            const country = document.createElement("div");
+            country.className = "country";
+            country.textContent = clock.label;
+
+            const time = document.createElement("div");
+            time.className = "time";
+            time.id = `time-${clock.zone}`; // Use zone for unique ID
+
+            card.appendChild(country);
+            card.appendChild(time);
+            clockGrid.appendChild(card);
+
+            currentDisplayedClock = clock; // Set the currently displayed clock
+            updateDisplayedClockTime(); // Update time immediately for the newly added card
+        }
+
+        // Handle search input and display suggestions
+        searchInput.addEventListener("input", () => {
+            const query = searchInput.value.toLowerCase();
+            suggestionsList.innerHTML = ''; // Clear previous suggestions
+
+            if (query.length > 0) {
+                const filteredClocks = clocks.filter(clock =>
+                    clock.label.toLowerCase().includes(query)
+                ).slice(0, 7); // Limit suggestions to a reasonable number
+
+                if (filteredClocks.length > 0) {
+                    suggestionsList.style.display = 'block'; // Show suggestions list
+                    filteredClocks.forEach(clock => {
+                        const listItem = document.createElement("li");
+                        listItem.className = "suggestion-item";
+                        listItem.textContent = clock.label;
+                        listItem.addEventListener("click", () => {
+                            searchInput.value = clock.label; // Fill input with selected value
+                            suggestionsList.innerHTML = ''; // Clear suggestions
+                            suggestionsList.style.display = 'none'; // Hide suggestions list
+                            renderClockCard(clock); // Display the selected clock
+                        });
+                        suggestionsList.appendChild(listItem);
+                    });
+                } else {
+                    suggestionsList.style.display = 'block'; // Show suggestions list even for "No results"
+                    const noResultItem = document.createElement("li");
+                    noResultItem.className = "suggestion-item no-results";
+                    noResultItem.textContent = "No results found";
+                    suggestionsList.appendChild(noResultItem);
+                }
+            } else {
+                // If search input is empty, clear suggestions but keep the last selected clock
+                // The currentDisplayedClock is not reset here, so it remains visible
+                suggestionsList.innerHTML = ''; 
+                suggestionsList.style.display = 'none';
+            }
+        });
+
+        // Clear suggestions when clicking outside the input/suggestions area
+        document.addEventListener("click", (event) => {
+            if (!event.target.closest(".suggestions-container")) {
+                suggestionsList.innerHTML = '';
+                suggestionsList.style.display = 'none';
+            }
+        });
+
+        // Initialize the suggestions list as hidden
+        suggestionsList.style.display = 'none';
+
+        // --- New: Set Default Indian Time on Page Load ---
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const indiaClock = clocks.find(clock => clock.zone === "Asia/Kolkata");
+            if (indiaClock) {
+                renderClockCard(indiaClock); // Display Indian clock
+                searchInput.value = indiaClock.label; // Pre-fill search input
+            }
+        });
+
+
+        // ---------- Stopwatch ----------
+        let startTime = null;
+        let stopwatchInterval = null;
+        let elapsed = 0;
+        const display = document.getElementById("stopwatchDisplay");
+        const lapsContainer = document.getElementById("lapsContainer");
+
+        function updateStopwatch() {
+            const now = Date.now();
+            const time = new Date(now - startTime + elapsed);
+            const ms = String(time.getUTCMilliseconds()).padStart(3, '0');
+            const sec = String(time.getUTCSeconds()).padStart(2, '0');
+            const min = String(time.getUTCMinutes()).padStart(2, '0');
+            const hr = String(time.getUTCHours()).padStart(2, '0');
+            display.textContent = `${hr}:${min}:${sec}.${ms}`;
+        }
+
+        document.getElementById("startBtn").onclick = () => {
+            if (!stopwatchInterval) {
+                startTime = Date.now();
+                stopwatchInterval = setInterval(updateStopwatch, 10);
+            }
+        };
+
+        document.getElementById("stopBtn").onclick = () => {
+            if (stopwatchInterval) {
+                clearInterval(stopwatchInterval);
+                elapsed += Date.now() - startTime;
+                stopwatchInterval = null;
+            }
+        };
+
+        document.getElementById("resetBtn").onclick = () => {
+            clearInterval(stopwatchInterval);
+            stopwatchInterval = null;
+            elapsed = 0;
+            display.textContent = "00:00:00.000";
+            lapsContainer.innerHTML = "";
+        };
+
+        document.getElementById("lapBtn").onclick = () => {
+            if (stopwatchInterval) {
+                const lapTime = display.textContent;
+                const lapDiv = document.createElement("div");
+                lapDiv.textContent = `Lap: ${lapTime}`;
+                lapsContainer.prepend(lapDiv);
+            }
+        };
+    </script>
+</body>
+</html>
